@@ -1,5 +1,7 @@
 # whatsapp-Narwal
 
+[![CI](https://github.com/Yehonatan-Bar/Whatsapp-Narwal/actions/workflows/ci.yml/badge.svg)](https://github.com/Yehonatan-Bar/Whatsapp-Narwal/actions/workflows/ci.yml)
+
 Control a **Narwal Flow / AX12 robot vacuum from a WhatsApp group**. Send a message like
 `clean the kitchen` (or, in Hebrew, `נקה את המטבח`) to a dedicated group and the robot cleans that
 room — by default **vacuum, then mop**. No Narwal cloud account is used; the robot is driven directly
