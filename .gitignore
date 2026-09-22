@@ -1,0 +1,17 @@
+# Your live config holds the robot's LAN IP and (optionally) its device id — keep it out of git.
+config.json
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# Logs
+*.log
+
+# Node bridge: dependencies, WhatsApp linked-device credentials, local env
+bridge/node_modules/
+bridge/auth/
+bridge/.env

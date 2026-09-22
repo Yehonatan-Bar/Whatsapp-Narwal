@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Narwal Flow — שליטה מקומית</title>
+  <style>
+    :root { color-scheme: dark; --bg:#071614; --panel:#102522; --line:#28504a; --ink:#e6f4ee; --muted:#9ab8b0; --aqua:#4ee0bd; --blue:#76baff; --danger:#ff8578; --warning:#ffc969; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100vh; background:radial-gradient(circle at 85% 0%,#174238 0,transparent 31rem),var(--bg); color:var(--ink); font:16px/1.45 system-ui,-apple-system,"Segoe UI",Arial,sans-serif; }
+    main { width:min(1120px,calc(100% - 32px)); margin:0 auto; padding:36px 0 54px; }
+    header { display:flex; gap:18px; align-items:center; justify-content:space-between; margin-bottom:28px; }
+    h1 { margin:0; font-size:clamp(1.65rem,4vw,2.45rem); letter-spacing:-.04em; }
+    h2 { margin:0 0 16px; font-size:1.13rem; }
+    p { color:var(--muted); margin:4px 0 0; }
+    button, select { border:1px solid var(--line); border-radius:10px; background:#14332e; color:var(--ink); font:inherit; padding:10px 13px; cursor:pointer; }
+    button:hover:not(:disabled) { border-color:var(--aqua); transform:translateY(-1px); }
+    button:disabled { cursor:wait; opacity:.65; }
+    button.primary { background:var(--aqua); color:#06231c; border-color:var(--aqua); font-weight:700; }
+    button.danger { background:#442323; border-color:#7b3934; color:#ffd7d2; }
+    button.ghost { background:transparent; }
+    .grid { display:grid; gap:16px; }
+    .status { grid-template-columns:repeat(4,minmax(0,1fr)); }
+    .layout { grid-template-columns:1.15fr .85fr; margin-top:16px; }
+    .panel { background:linear-gradient(145deg,rgba(23,52,47,.96),rgba(12,32,29,.96)); border:1px solid var(--line); border-radius:18px; padding:20px; box-shadow:0 22px 60px rgba(0,0,0,.18); }
+    .card { padding:17px; min-height:112px; }
+    .card span { display:block; font-size:.84rem; color:var(--muted); }
+    .card strong { display:block; font-size:1.35rem; margin-top:8px; overflow-wrap:anywhere; }
+    .identity { font-size:.9rem; color:var(--muted); }
+    .notice { min-height:24px; margin:0 0 16px; padding:10px 13px; border-radius:9px; border:1px solid transparent; color:var(--muted); }
+    .notice.success { color:#caffec; border-color:#2d7866; background:#103a31; }
+    .notice.error { color:#ffd4cf; border-color:#8b3d36; background:#3c2422; }
+    .rooms { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:9px; max-height:290px; overflow:auto; padding-left:3px; }
+    .room { display:flex; align-items:center; gap:9px; border:1px solid #244740; border-radius:10px; padding:10px; background:#0d211e; }
+    .room input { width:17px; height:17px; accent-color:var(--aqua); }
+    .room small { color:var(--muted); display:block; }
+    .settings { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin:16px 0; }
+    label { display:grid; gap:5px; color:var(--muted); font-size:.85rem; }
+    select { width:100%; background:#0d211e; }
+    .actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+    .actions .wide { grid-column:1/-1; }
+    .help { font-size:.86rem; margin-top:12px; }
+    pre { direction:ltr; text-align:left; white-space:pre-wrap; overflow-wrap:anywhere; background:#071210; border:1px solid #1d3e38; padding:12px; border-radius:10px; margin:18px 0 0; color:#b8d5cc; font-size:.78rem; max-height:230px; overflow:auto; }
+    .dot { display:inline-block; width:9px; height:9px; border-radius:50%; background:var(--warning); margin-left:7px; }
+    .dot.ok { background:var(--aqua); }
+    .dot.bad { background:var(--danger); }
+    @media (max-width:760px) { main { width:min(100% - 22px,1120px); padding-top:20px; } header { align-items:flex-start; flex-direction:column; } .status,.layout { grid-template-columns:1fr 1fr; } .layout { grid-template-columns:1fr; } }
+    @media (max-width:430px) { .status,.settings { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>שליטה מקומית ב־Narwal Flow</h1>
+        <p id="identity">מתחבר לרובוט המקומי…</p>
+      </div>
+      <button class="ghost" id="refresh">↻ רענון</button>
+    </header>
+
+    <div id="notice" class="notice"><span class="dot"></span>טוען מצב וחדרים…</div>
+
+    <section class="grid status" aria-label="סטטוס הרובוט">
+      <article class="panel card"><span>מצב</span><strong id="state">—</strong></article>
+      <article class="panel card"><span>סוללה</span><strong id="battery">—</strong></article>
+      <article class="panel card"><span>בעמדת הטעינה</span><strong id="docked">—</strong></article>
+      <article class="panel card"><span>שגיאות</span><strong id="errors">—</strong></article>
+    </section>
+
+    <section class="grid layout">
+      <article class="panel">
+        <h2>ניקוי חדרים</h2>
+        <p>בחר חדר אחד או יותר; הסדר ברשימה הוא סדר הניקוי.</p>
+        <div id="rooms" class="rooms" aria-live="polite"><p>קורא את המפה…</p></div>
+        <div class="settings">
+          <label>מצב ניקוי<select id="mode"><option value="vacuum-and-mop">שאיבה ושטיפה</option><option value="vacuum">שאיבה</option><option value="mop">שטיפה</option><option value="vacuum-then-mop">שאיבה ואז שטיפה</option></select></label>
+          <label>עוצמת שאיבה<select id="fan"><option value="mute">שקט</option><option value="normal" selected>רגיל</option><option value="strong">חזק</option><option value="deep">עמוק</option><option value="super">סופר</option></select></label>
+          <label>כמות מים<select id="water"><option value="dry">יבש</option><option value="normal" selected>רגיל</option><option value="wet">רטוב</option></select></label>
+          <label>חפיפות<select id="passes"><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></label>
+          <label>עוצמת שפשוף<select id="mop_strength"><option value="normal" selected>רגיל</option><option value="high">גבוה</option></select></label>
+          <label>דיוק מסלול<select id="route"><option value="">רגיל</option><option value="standard">סטנדרטי</option><option value="meticulous">יסודי</option></select></label>
+        </div>
+        <div class="actions">
+          <button class="primary" data-action="clean-rooms">נקה חדרים נבחרים</button>
+          <button data-action="clean-all">נקה את כל הבית</button>
+        </div>
+      </article>
+
+      <article class="panel">
+        <h2>פקודות מהירות</h2>
+        <div class="actions">
+          <button data-action="locate">מצא את הרובוט</button><button data-action="home">חזרה לבסיס</button>
+          <button data-action="pause">השהה</button><button data-action="resume">המשך</button>
+          <button data-action="quick-clean">ניקוי מהיר</button><button data-action="wash-mops">שטיפת מגבים</button>
+          <button data-action="dry-mops">ייבוש מגבים</button><button data-action="empty-bin">ריקון מיכל</button>
+          <button data-action="set-fan">עדכן עוצמת שאיבה</button><button data-action="set-water">עדכן כמות מים</button>
+          <button class="danger wide" data-action="stop">עצירה כפויה</button>
+        </div>
+        <p class="help">כל פעולה דורשת אישור נוסף. פעולות ניקוי ותחנה נשלחות רק כשהרובוט מזוהה בעגינה.</p>
+      </article>
+    </section>
+    <pre id="details" aria-live="polite">ממתין למידע…</pre>
+  </main>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const labels = { locate:"מציאת הרובוט", home:"חזרה לבסיס", pause:"השהיה", resume:"המשך", stop:"עצירה כפויה", "quick-clean":"ניקוי מהיר", "wash-mops":"שטיפת מגבים", "dry-mops":"ייבוש מגבים", "empty-bin":"ריקון מיכל", "set-fan":"עדכון עוצמת שאיבה", "set-water":"עדכון כמות מים", "clean-rooms":"ניקוי החדרים שנבחרו", "clean-all":"ניקוי כל הבית" };
+    let busy = false;
+
+    function writeNotice(message, kind = "") {
+      const node = $("notice"); node.className = `notice ${kind}`;
+      const dot = document.createElement("span"); dot.className = `dot ${kind === "success" ? "ok" : kind === "error" ? "bad" : ""}`;
+      node.replaceChildren(dot, document.createTextNode(message));
+    }
+    function setBusy(value) { busy = value; document.querySelectorAll("button").forEach(b => b.disabled = value); }
+    async function api(url, options) {
+      const response = await fetch(url, options);
+      const data = await response.json().catch(() => ({ error:"תגובה לא תקינה מהדשבורד" }));
+      if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
+      return data;
+    }
+    function renderStatus(data) {
+      const identity = data.identity || {};
+      $("identity").textContent = `${identity.product_key || "Narwal"} · קושחה ${identity.firmware || "לא ידוע"} · ${identity.device_id || ""}`;
+      const status = data.status || {};
+      const live = status.live || {};
+      $("state").textContent = status.state === "cleaning" && live.progress_percent != null ? `ניקוי · ${live.progress_percent}%` : status.state === "active_task_context" ? "משימה פעילה / מתעדכנת" : (status.state || "לא ידוע");
+      $("battery").textContent = status.battery_percent == null ? "לא ידוע" : `${status.battery_percent}%`;
+      $("docked").textContent = status.docked === true ? "כן" : status.docked === false ? "לא" : "לא ידוע";
+      $("errors").textContent = status.error_codes && status.error_codes.length ? status.error_codes.join(", ") : "אין";
+      $("details").textContent = JSON.stringify(data, null, 2);
+    }
+    function renderRooms(data) {
+      const root = $("rooms"); root.replaceChildren();
+      const rooms = data.map && data.map.rooms || [];
+      if (!rooms.length) { root.textContent = "לא נמצאו חדרים במפה הפעילה."; return; }
+      rooms.forEach((room) => {
+        const label = document.createElement("label"); label.className = "room";
+        const box = document.createElement("input"); box.type = "checkbox"; box.value = String(room.id); box.name = "room";
+        const text = document.createElement("span"); text.textContent = room.name || `חדר ${room.id}`;
+        const metadata = document.createElement("small"); metadata.textContent = `מזהה ${room.id}${room.type == null ? "" : ` · סוג ${room.type}`}`;
+        const holder = document.createElement("span"); holder.append(text, metadata); label.append(box, holder); root.append(label);
+      });
+      $("details").textContent = JSON.stringify(data, null, 2);
+    }
+    async function loadStatus() {
+      try { const data = await api("/api/status"); renderStatus(data); writeNotice("מחובר לרובוט המקומי", "success"); }
+      catch (error) { writeNotice(error.message, "error"); $("details").textContent = error.message; }
+    }
+    async function loadRooms() {
+      try { renderRooms(await api("/api/rooms")); }
+      catch (error) { $("rooms").textContent = `לא ניתן לקרוא חדרים: ${error.message}`; }
+    }
+    function cleaningSettings() {
+      const route = $("route").value;
+      return { mode:$("mode").value, fan:$("fan").value, water:$("water").value, mop_strength:$("mop_strength").value, passes:Number($("passes").value), route:route || null };
+    }
+    async function runAction(action) {
+      if (busy) return;
+      let payload = { confirm:true };
+      if (action === "clean-rooms") {
+        const rooms = [...document.querySelectorAll('input[name="room"]:checked')].map(node => Number(node.value));
+        if (!rooms.length) { writeNotice("בחר לפחות חדר אחד לפני התחלת ניקוי.", "error"); return; }
+        payload = { ...payload, ...cleaningSettings(), rooms };
+      } else if (action === "clean-all") payload = { ...payload, ...cleaningSettings() };
+      else if (action === "set-fan") payload.fan = $("fan").value;
+      else if (action === "set-water") payload.water = $("water").value;
+      if (!window.confirm(`לאשר: ${labels[action] || action}?`)) return;
+      setBusy(true); writeNotice(`שולח: ${labels[action] || action}…`);
+      try {
+        const result = await api(`/api/actions/${encodeURIComponent(action)}`, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(payload) });
+        $("details").textContent = JSON.stringify(result, null, 2);
+        writeNotice(result.accepted ? "הפקודה התקבלה ברובוט" : "הרובוט דחה את הפקודה", result.accepted ? "success" : "error");
+        await loadStatus();
+      } catch (error) { writeNotice(error.message, "error"); $("details").textContent = error.message; }
+      finally { setBusy(false); }
+    }
+    $("refresh").addEventListener("click", async () => { if (!busy) { setBusy(true); await Promise.all([loadStatus(), loadRooms()]); setBusy(false); } });
+    document.querySelectorAll("[data-action]").forEach(button => button.addEventListener("click", () => runAction(button.dataset.action)));
+    Promise.all([loadStatus(), loadRooms()]);
+    window.setInterval(() => { if (!busy) loadStatus(); }, 15000);
+  </script>
+</body>
+</html>

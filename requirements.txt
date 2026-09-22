@@ -1,0 +1,5 @@
+# Runtime dependencies for the Python agent + dashboard.
+websockets>=12       # the LAN WebSocket to the robot (narwal_local.py)
+flask>=3             # the agent's HTTP receiver and the optional local dashboard
+
+# Dev/test only (not required to run): pytest

@@ -1,0 +1,43 @@
+{
+  "host": "192.168.1.50",
+  "port": 9002,
+  "product_key": "QoEsI5qYXO",
+  "device_id": "",
+  "room_names": {
+    "1": "Living room",
+    "2": "Kitchen",
+    "3": "Bedroom",
+    "4": "Bathroom",
+    "5": "Hallway"
+  },
+  "clean": {
+    "mode": "vacuum-then-mop",
+    "fan": "normal",
+    "water": "normal",
+    "mop_strength": "normal",
+    "passes": 1,
+    "route": null
+  },
+  "commands": {
+    "verbs": ["clean", "vacuum", "mop", "נקה", "תנקה", "לנקות", "נקי", "שאב", "שטוף"],
+    "all_aliases": ["everything", "whole home", "the house", "all", "הכל", "כל הבית", "הבית"],
+    "rooms": {
+      "living room": [1],
+      "living": [1],
+      "salon": [1],
+      "kitchen": [2],
+      "bedroom": [3],
+      "bathroom": [4],
+      "toilet": [4],
+      "hallway": [5],
+      "corridor": [5]
+    }
+  },
+  "agent": {
+    "host": "127.0.0.1",
+    "port": 8799,
+    "token": null,
+    "dedup_size": 200,
+    "log_file": null
+  }
+}
